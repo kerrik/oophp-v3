@@ -13,7 +13,7 @@ class CTango {
     private $favicon = "";
     private $style = [];
     private $embed_style = "";
-    private $javascript_include = array();
+    private $script = [];
     private $google_analytics = false;
     private $title = "";
     private $title_append = "";
@@ -23,7 +23,7 @@ class CTango {
     // Här kommer variablerna för sidinnehåll
 
     private $header = "";
-    private $main = "";
+    private $content = "";
     private $footer = "";
     private $side = array();
 
@@ -31,27 +31,7 @@ class CTango {
         $this->set_property('favicon', 'favicon.ico');
     }
 
-    public function js_include($script_path, $header = TRUE, $id = null) {
-
-        switch ($header) {
-            case TRUE:
-                if (isset($id)) {
-                    $this->javascript_include['header'][$id] = $script_path;
-                } else {
-                    $this->javascript_include['header'][] = $script_path;
-                }
-                break;
-            case FALSE:
-                if (isset($id)) {
-                    $this->javascript_include['footer'][$id] = $script_path;
-                } else {
-                    $this->javascript_include['footer'][] = $script_path;
-                }
-                break;
-            default :
-                return false;
-        }
-    }
+    
 public function set_lang($lang) {
         $this->lang=$lang;
     }
@@ -66,36 +46,73 @@ public function set_lang($lang) {
     public function favicon() {
         return $this->favicon;
     }
-
-    public function style() {
-        return $this->style;
+public function set_title($title) {
+         $this->title = $title;
     }
 
     public function title() {
         return $this->title;
     }
-
+public function set_title_append($title_append) {
+       $this->title_append = $title_append;
+    }
     public function title_append() {
         return $this->title_append;
     }
 
+     public function set_logo($logo) {
+         $this->logo = (file_exists($logo) ? "<link rel='shortcut icon' href='favicon.ico'/>\n" : "");
+       }
     public function logo() {
         return $this->logo;
     }
 
-    
+    public function set_content($content) {
+        $this->content .=$content;
+    }
 
     public function main() {
         return $this->main;
+    }
+    public function set_header($header) {
+        $this->header=$header;
+    }
+    public function header() {
+        if (!$this->header) {
+            $this->header = (empty($this->logo)) ? "" : "<img class='sitelogo left' src='{$this->logo}' alt=''/>\n";
+            $this->header .= "<div class='sitetitle left'>$this->title</div>\n";
+            $this->header .= "<div class='siteslogan left'>$this->title_append</div>\n";
+        }
+        return $this->header;
     }
 
     public function footer() {
         return $this->footer;
     }
 
-    
+    public function set_script($script_path, $header = TRUE, $id = null) {
 
-    public function scripts_header() {
+        switch ($header) {
+            case TRUE:
+                if (isset($id)) {
+                    $this->script['header'][$id] = $script_path;
+                } else {
+                    $this->script['header'][] = $script_path;
+                }
+                break;
+            case FALSE:
+                if (isset($id)) {
+                    $this->script['footer'][$id] = $script_path;
+                } else {
+                    $this->script['footer'][] = $script_path;
+                }
+                break;
+            default :
+                return false;
+        }
+    }
+
+    public function scripts_head() {
         $scripts_header = '';
         if (isset($this->javascript_include['header'])) {
             foreach ($this->javascript_include['header'] as $val) {
@@ -113,13 +130,12 @@ public function set_lang($lang) {
             }
         }
         if ($this->google_analytics) {
-            $scripts_footer .= <<<EOD
-                    <script>
-                    var _gaq=[['_setAccount','$this->google_analytics'],['_trackPageview']];
-                    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-                    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-                    s.parentNode.insertBefore(g,s)}(document,'script'));
-                    </script>
+            $scripts_footer .= "<script>\n";
+            $scripts_footer .= "var _gaq=[['_setAccount','{$this->google_analytics}'],['_trackPageview']];n";
+            $scripts_footer .= "(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];\n";
+            $scripts_footer .= "g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';\n";
+            $scripts_footer .= "s.parentNode.insertBefore(g,s)}(document,'script'))\n";
+            $scripts_footer .= "</script>\n";
 
 EOD
             ; // endif
@@ -137,32 +153,9 @@ EOD
 
     public function set_property($property, $value) {
         switch ($property) {
-            case 'lang':
-                $this->lang = $value;
-                break;
-            case 'favicon':
-                $this->favicon = (file_exists($value) ? "<link rel='shortcut icon' href='favicon.ico'/>\n" : "");
-                break;
-            case 'style':
-                $this->style[] = $value;
-                break;
+           
             case 'embed_style':
                 $this->embed_style[] = $value;
-                break;
-            case 'title':
-                $this->title = $value;
-                break;
-            case 'title_append':
-                $this->title_append = $value;
-                break;
-            case 'logo':
-                $this->logo = $value;
-                break;
-            case 'header':
-                $this->header = $value;
-                break;
-            case 'main':
-                $this->main = $value;
                 break;
             case 'footer':
                 $this->footer = $value;
@@ -170,22 +163,12 @@ EOD
             case 'side':
                 $this->side = $value;
                 break;
-            case 'modernizr':
-                $this->modernizr = $value;
-                break;
                 ;
             default:
                 echo "Värdet finns inte {$property}";
         }
     }
-public function header() {
-        if (!$this->header) {
-            $this->header = (empty($this->logo)) ? "" : "<img class='sitelogo left' src='{$this->logo}' alt=''/>\n";
-            $this->header .= "<div class='sitetitle left'>$this->title</div>\n";
-            $this->header .= "<div class='siteslogan left'>$this->title_append</div>\n";
-        }
-        return $this->header;
-    }
+
     public static function menu($items) {
         CMenu::show($items);
     }
